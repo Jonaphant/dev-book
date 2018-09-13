@@ -5,7 +5,7 @@ const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
 
 // Load User model
-const User = require("../../models/User");
+const User = require("../../models/User.js");
 
 // @route     GET api/users/test
 // @desc      Tests users route
@@ -35,7 +35,9 @@ router.post("/register", (req, res) => {
 
       bcrypt.genSalt(10, (err, salt) => {
         bcrypt.hash(newUser.password, salt, (err, hash) => {
-          if (err) throw err;
+          if (err) {
+            throw err;
+          }
           newUser.password = hash;
           newUser
             .save()
@@ -44,6 +46,31 @@ router.post("/register", (req, res) => {
         });
       });
     }
+  });
+});
+
+// @route     GET api/users/login
+// @desc      Login User / Returning JWT Token
+// @access    Public
+router.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  // Find user by email
+  User.findOne({ email }).then(user => {
+    // Check for user
+    if (!user) {
+      return res.status(404).json({ email: "User not found" });
+    }
+
+    // Check Password
+    bcrypt.compare(password, user.password).then(isMatch => {
+      if (isMatch) {
+        res.json({ msg: "Success" });
+      } else {
+        return res.status(400).json({ password: "Password incorrect" });
+      }
+    });
   });
 });
 
